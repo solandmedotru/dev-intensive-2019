@@ -3,78 +3,18 @@ package ru.skillbranch.devintensive.extensions
 import ru.skillbranch.devintensive.models.User
 import ru.skillbranch.devintensive.models.UserView
 import ru.skillbranch.devintensive.utils.Utils
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
-fun User.toUserView(): UserView {
-
-    val nickname = Utils.transliteration("$firstName $lastName")
+fun User.toUserView() : UserView {
+    val nickName = Utils.transliteration("$firstName $lastName")
     val initials = Utils.toInitials(firstName, lastName)
-    val status =
-        if (lastVisit == null) "Ещё ни разу не был" else if (isOnline) "online" else "Последний раз был ${lastVisit.humanizeDiff()}"
+    val status = if (lastVisit == null) "Ещё ни разу не был" else if (isOnline) "online" else "Последний раз был ${lastVisit!!.humanizeDiff()}"
 
     return UserView(
         id,
         fullName = "$firstName $lastName",
-        nickname = nickname,
+        nickName = nickName,
         initials = initials,
         avatar = avatar,
         status = status
     )
-}
-
-/* Усечение строки */
-fun String.truncate(number: Int = 16): String {
-
-    /* Удаление лишних пробелов в конце строки*/
-    var truncString = this.trim(' ')
-
-    /* Если длина строки без пробелов меньше количества убираемых символов */
-    if (truncString.length < number) {
-        /* Если последний символ - пробел, он удаляется */
-        if (this[this.length - 1].toString() == " ")
-            return this.trim(' ')
-        else
-            return this
-    }
-
-    /* Удаление последних символов, не являющихся пробелами */
-    truncString = this.dropLast(this.length - number)
-
-    /* Если последний символ после усечения - пробел, то он удаляется*/
-    if (this[number - 1].toString() == " ") {
-        truncString = truncString.trim(' ')
-    }
-
-    truncString = truncString.padEnd(truncString.length + 3, '.')
-
-    return truncString
-}
-
-/* Очищение строки от html-разметки */
-fun String.stripHtml(): String {
-
-    var stringLength = this.length
-    var newString: String = ""
-    var i = 0
-
-    /* Цикл пока не просмотрена вся строка */
-    while (stringLength > i) {
-        /* Если встреченный символ - < */
-        if (this[i] == '<') {
-            /* Цикл пока не найдена закрывающая >*/
-            while (this[i] != '>' && stringLength > i) {
-                i++
-            }
-            i++
-        } else {
-            newString += this[i]
-            i++
-        }
-    }
-
-    newString = newString.replace("\\s+".toRegex(), " ").replace("[&<>'/\"]".toRegex(), " ")
-
-    return newString
 }
