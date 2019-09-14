@@ -1,109 +1,182 @@
 package ru.skillbranch.devintensive.extensions
 
+import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
-import kotlin.math.roundToInt
 import java.util.*
 
 const val SECOND = 1000L
 const val MINUTE = 60 * SECOND
-const val HOUR  = 60 * MINUTE
+const val HOUR = 60 * MINUTE
 const val DAY = 24 * HOUR
 
-enum class TimeUnits {
-    SECOND {
-        override fun plural(value: Int): String {
-            return "$value ${numeralRu(value, "секунду", "секунды", "секунд")}"
-        }
-    },
-    MINUTE {
-        override fun plural(value: Int): String {
-            return "$value ${numeralRu(value, "минуту", "минуты", "минут")}"
-        }
-    },
-    HOUR {
-        override fun plural(value: Int): String {
-            return "$value ${numeralRu(value, "час", "часа", "часов")}"
-        }
-    },
-    DAY {
-        override fun plural(value: Int): String {
-            return "$value ${numeralRu(value, "день", "дня", "дней")}"
-        }
-    };
-
-    abstract fun plural(value: Int): String
+/* Форматирование даты в формате час:минута:секунда день.месяц.год */
+fun Date.format(pattern: String = "HH:mm:ss dd.MM.yy"): String {
+    val dateFormat = SimpleDateFormat(pattern, Locale("ru"))
+    return dateFormat.format(this)
 }
 
-fun Date.format(pattern: String=""): String {
-    val sdf= when(pattern) {
-        ""   -> SimpleDateFormat("HH:mm:ss dd.MM.yy", Locale("ru"))
-        else -> SimpleDateFormat(pattern, Locale.getDefault())
-    }
-
-    return sdf.format(this)
-}
-
-fun Date.add(value: Int, units: TimeUnits = TimeUnits.SECOND): Date? {
+/* Добавление сдвига по времени */
+fun Date.add(value: Int, units: TimeUnits): Date {
     var time = this.time
 
-    time += when(units) {
+    time += when (units) {
         TimeUnits.SECOND -> value * SECOND
         TimeUnits.MINUTE -> value * MINUTE
-        TimeUnits.HOUR   -> value * HOUR
-        TimeUnits.DAY    -> value * DAY
+        TimeUnits.HOUR -> value * HOUR
+        TimeUnits.DAY -> value * DAY
     }
+
     this.time = time
+
     return this
 }
 
-fun numeralRu(value: Int, single: String, few: String, many: String): String
-{
-    return when {
-        value % 10 == 0 -> many
-        value % 100 in 11..19 -> many
-        value % 10 == 1 -> single
-        value % 10 in 1..4 -> few
-        else -> many
+enum class TimeUnits {
+    SECOND,
+    MINUTE,
+    HOUR,
+    DAY;
+    fun plural(number: Int): String {
+
+        val strNumber = number.toString()
+        val lastSymbol: String = (strNumber[strNumber.length - 1]).toString()
+
+        when (this) {
+            TimeUnits.SECOND -> {
+                if (strNumber != "10" && strNumber != "11" && strNumber != "12" && strNumber != "13" && strNumber != "14" && strNumber != "15"
+                    && strNumber != "16" && strNumber != "17" && strNumber != "18" && strNumber != "19"
+                ) {
+                    when (lastSymbol) {
+                        "1" -> return "$strNumber секунду"
+                        "2", "3", "4" -> return "$strNumber секунды"
+                        "5", "6", "7", "8", "9", "0" -> return "$strNumber секунд"
+                        else -> return "$strNumber секунд"
+                    }
+                } else
+                    return "$strNumber минут"
+            }
+            TimeUnits.MINUTE -> {
+                if (strNumber != "10" && strNumber != "11" && strNumber != "12" && strNumber != "13" && strNumber != "14" && strNumber != "15"
+                    && strNumber != "16" && strNumber != "17" && strNumber != "18" && strNumber != "19"
+                ) {
+                    when (lastSymbol) {
+                        "1" -> return "$strNumber минуту"
+                        "2", "3", "4" -> return "$strNumber минуты"
+                        "5", "6", "7", "8", "9", "0" -> return "$strNumber минут"
+                        else -> return "$strNumber минут"
+                    }
+                } else
+                    return "$strNumber минут"
+            }
+            TimeUnits.HOUR -> {
+                if (strNumber != "10" && strNumber != "11" && strNumber != "12" && strNumber != "13" && strNumber != "14" && strNumber != "15"
+                    && strNumber != "16" && strNumber != "17" && strNumber != "18" && strNumber != "19"
+                ) {
+                    when (lastSymbol) {
+                        "1" -> return "$strNumber час"
+                        "2", "3", "4" -> return "$strNumber часа"
+                        "5", "6", "7", "8", "9", "0" -> return "$strNumber часов"
+                        else -> return "$strNumber часов"
+                    }
+                } else
+                    return "$strNumber часов"
+            }
+            TimeUnits.DAY -> {
+                if (strNumber != "10" && strNumber != "11" && strNumber != "12" && strNumber != "13" && strNumber != "14" && strNumber != "15"
+                    && strNumber != "16" && strNumber != "17" && strNumber != "18" && strNumber != "19"
+                ) {
+                    when (lastSymbol) {
+                        "1" -> return "$strNumber день"
+                        "2", "3", "4" -> return "$strNumber дня"
+                        "5", "6", "7", "8", "9", "0" -> return "$strNumber дней"
+                        else -> return "$strNumber дней"
+                    }
+                } else
+                    return "$strNumber дней"
+            }
+        }
+
+        return ""
     }
 }
 
-fun Date.humanizeDiff(): String {
-    val diffMilsec: Long = Date().time - this.time
-    return when {
-        diffMilsec > 360 * DAY -> "более года назад"
-        diffMilsec < -360 * DAY -> "более чем через год"
-        diffMilsec > 26 * HOUR -> {
-            val days: Int = (diffMilsec.toFloat() / DAY.toFloat()).roundToInt()
-            "$days ${numeralRu(days, "день", "дня", "дней")} назад"
-        }
-        diffMilsec < -26 * HOUR -> {
-            val days: Int = (diffMilsec.toFloat() / DAY.toFloat()).roundToInt()
-            "через ${-days} ${numeralRu(-days, "день", "дня", "дней")}"
-        }
-        diffMilsec > 22 * HOUR -> "день назад"
-        diffMilsec < -22 * HOUR -> "через день"
-        diffMilsec > 75 * MINUTE -> {
-            val hours: Int = (diffMilsec.toFloat() / HOUR.toFloat()).roundToInt()
-            "$hours ${numeralRu(hours, "час", "часа", "часов")} назад"
-        }
-        diffMilsec < -75 * MINUTE -> {
-            val hours: Int = (diffMilsec.toFloat() / HOUR.toFloat()).roundToInt()
-            "через ${-hours} ${numeralRu(-hours, "час", "часа", "часов")}"
-        }
-        diffMilsec > 45 * MINUTE -> "час назад"
-        diffMilsec < -45 * MINUTE -> "через час"
-        diffMilsec > 75 * SECOND -> {
-            val minutes: Int = (diffMilsec.toFloat() / MINUTE.toFloat()).roundToInt()
-            "$minutes ${numeralRu(minutes, "минута", "минуты", "минут")} назад"
-        }
-        diffMilsec < -75 * SECOND -> {
-            val minutes: Int = (diffMilsec.toFloat() / MINUTE.toFloat()).roundToInt()
-            "через ${-minutes} ${numeralRu(-minutes, "минута", "минуты", "минут")}"
-        }
-        diffMilsec > 45 * SECOND -> "минуту назад"
-        diffMilsec < -45 * SECOND -> "через минуту"
-        diffMilsec > 1 * SECOND -> "несколько секунд назад"
-        diffMilsec < -1 * SECOND -> "через несколько секунд"
-        else -> "только что"
+/* форматирование вывода разницы между датами в человекообразном формате */
+fun Date.humanizeDiff(date: Date = Date()): String {
+    var delta = this.time - date.time
+    delta = delta / 1000 * 1000
+
+    var past = false
+    if (delta < 0) {
+        past = true
+        delta = -delta
     }
+
+    if (past) {
+        val seconds = delta / 1000
+        val minutes = delta / (60 * 1000)
+        val hours = delta / (3600 * 1000)
+        val days = delta / (24 * 3600 * 1000)
+
+        if (seconds < 1)
+            return "только что"
+
+        if (seconds in 1..45)
+            return "несколько секунд назад"
+
+        if (seconds in 45..75)
+            return "минуту назад"
+
+        if (seconds > 75 && minutes < 45)
+            return "${TimeUnits.MINUTE.plural(minutes.toInt())} назад"
+
+        if (minutes in 45..75)
+            return "час назад"
+
+        if (minutes > 75 && hours < 22)
+            return "${TimeUnits.HOUR.plural(hours.toInt())} назад"
+
+        if (hours in 22..26)
+            return "день назад"
+
+        if (hours > 26 && days < 360)
+            return "${TimeUnits.DAY.plural(days.toInt())} назад"
+
+        if (days > 360)
+            return "более года назад"
+    } else {
+        val seconds = delta / 1000
+        val minutes = delta / (60 * 1000)
+        val hours = delta / (3600 * 1000)
+        val days = delta / (24 * 3600 * 1000)
+
+        if (seconds < 1)
+            return "только что"
+
+        if (seconds in 1..45)
+            return "через несколько секунд"
+
+        if (seconds in 45..75)
+            return "через минуту"
+
+        if (seconds > 75 && minutes < 45)
+            return "через ${TimeUnits.MINUTE.plural(minutes.toInt())}"
+
+        if (minutes in 45..75)
+            return "через час"
+
+        if (minutes > 75 && hours < 22)
+            return "через ${TimeUnits.HOUR.plural(hours.toInt())}"
+
+        if (hours in 22..26)
+            return "через день"
+
+        if (hours > 26 && days < 360)
+            return "через ${TimeUnits.DAY.plural(days.toInt())}"
+
+        if (days > 360)
+            return "более чем через год"
+    }
+
+
+    return ""
 }
