@@ -21,6 +21,6 @@ object Utils {
     }
 
     fun toInitials(firstName: String?, lastName: String?): String? {
-        return firstName
+        return lastName
     }
 }
