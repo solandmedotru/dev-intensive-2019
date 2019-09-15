@@ -4,11 +4,11 @@ class Bender(
     var status: Status = Status.NORMAL,
     var question: Question = Question.NAME
 ) {
-    fun askQuestion() : String = question.question
+    fun askQuestion(): String = question.question
 
-    fun getValidHint() : String = question.validHint
+    fun getValidHint(): String = question.validHint
 
-    fun listenAnswer(answer: String) : Pair<String, Triple<Int, Int, Int>> {
+    fun listenAnswer(answer: String): Pair<String, Triple<Int, Int, Int>> {
         return when {
             question.answers.contains(answer) -> {
                 question = question.nextQuestion()
@@ -27,7 +27,7 @@ class Bender(
         }
     }
 
-    fun validation(answer: String) : Boolean {
+    fun validation(answer: String): Boolean {
         return when (question) {
             Question.NAME -> answer.trim().firstOrNull()?.isUpperCase() ?: false
             Question.PROFESSION -> answer.trim().firstOrNull()?.isLowerCase() ?: false
@@ -54,19 +54,39 @@ class Bender(
     }
 
     enum class Question(val question: String, val answers: List<String>, val validHint: String) {
-        NAME("Как меня зовут?", listOf("бендер", "bender"), "Имя должно начинаться с заглавной буквы") {
+        NAME(
+            "Как меня зовут?",
+            listOf("бендер", "bender"),
+            "Имя должно начинаться с заглавной буквы"
+        ) {
             override fun nextQuestion(): Question = PROFESSION
         },
-        PROFESSION("Назови мою профессию?", listOf("сгибальщик", "bender"), "Профессия должна начинаться со строчной буквы") {
+        PROFESSION(
+            "Назови мою профессию?",
+            listOf("сгибальщик", "bender"),
+            "Профессия должна начинаться со строчной буквы"
+        ) {
             override fun nextQuestion(): Question = MATERIAL
         },
-        MATERIAL("Из чего я сделан?", listOf("металл", "дерево", "metal", "iron", "wood"), "Материал не должен содержать цифр") {
+        MATERIAL(
+            "Из чего я сделан?",
+            listOf("металл", "дерево", "metal", "iron", "wood"),
+            "Материал не должен содержать цифр"
+        ) {
             override fun nextQuestion(): Question = BDAY
         },
-        BDAY("Когда меня создали?", listOf("2993"), "Год моего рождения должен содержать только цифры") {
+        BDAY(
+            "Когда меня создали?",
+            listOf("2993"),
+            "Год моего рождения должен содержать только цифры"
+        ) {
             override fun nextQuestion(): Question = SERIAL
         },
-        SERIAL("Мой серийный номер?", listOf("2716057"), "Серийный номер содержит только цифры, и их 7") {
+        SERIAL(
+            "Мой серийный номер?",
+            listOf("2716057"),
+            "Серийный номер содержит только цифры, и их 7"
+        ) {
             override fun nextQuestion(): Question = IDLE
         },
         IDLE("На этом все, вопросов больше нет", listOf(), "") {
