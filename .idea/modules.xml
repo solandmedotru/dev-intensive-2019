@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Dev-intensive.iml" filepath="$PROJECT_DIR$/Dev-intensive.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/dev-intensive-2019.iml" filepath="$PROJECT_DIR$/.idea/dev-intensive-2019.iml" />
     </modules>
   </component>
 </project>
