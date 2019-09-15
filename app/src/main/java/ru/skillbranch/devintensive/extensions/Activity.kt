@@ -3,24 +3,46 @@ package ru.skillbranch.devintensive.extensions
 import android.app.Activity
 import android.content.Context
 import android.graphics.Rect
-import android.R
-import android.view.View
 import android.view.inputmethod.InputMethodManager
-import kotlin.math.roundToInt
+import android.util.TypedValue
+import android.view.View
+import kotlin.math.round
 
+/* Скрытие клавиатуры */
 fun Activity.hideKeyboard() {
-    val inputManager : InputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+    val imm = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+
+    /* Определение текущего фокуса */
+    var view = this.getCurrentFocus()
+
+    /* Скрытие клавиатуры */
+    imm.hideSoftInputFromWindow(view!!.getWindowToken(), 0)
 }
 
-fun Activity.isKeyboardOpen(): Boolean {
-    val rootView = findViewById<View>(R.id.content)
-    val visibleBounds = Rect()
-    rootView.getWindowVisibleDisplayFrame(visibleBounds)
+/* Конвертация dp в px */
+fun Context.convertDpToPx(dp: Float): Float {
+    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, this.resources.displayMetrics)
+}
 
-    val heightDiff = rootView.height - visibleBounds.height()
-    val marginOfError = this.convertDpToPx(50F).roundToInt()
+/* Проверка конфигурации клавиатуры */
+fun Activity.checkKeyboard(): Boolean {
+    val rootView = this.findViewById<View>(android.R.id.content)
+    val r = Rect()
+
+    rootView.getWindowVisibleDisplayFrame(r)
+
+    val heightDiff = rootView.height - r.height()
+    val marginOfError = round(this.convertDpToPx(50F))
+
     return heightDiff > marginOfError
 }
 
-fun Activity.isKeyboardClosed(): Boolean = isKeyboardOpen().not()
+/* Проврека на открытую клавиатуры */
+fun Activity.isKeyboardOpen(): Boolean {
+    return checkKeyboard()
+}
+
+/* Проврека на закрытую клавиатуры */
+fun Activity.isKeyboardClosed(): Boolean {
+    return !checkKeyboard()
+}

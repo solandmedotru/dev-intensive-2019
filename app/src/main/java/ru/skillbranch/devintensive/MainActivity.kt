@@ -5,49 +5,49 @@ import android.graphics.PorterDuff
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import ru.skillbranch.devintensive.extensions.hideKeyboard
-import ru.skillbranch.devintensive.extensions.isKeyboardOpen
 import ru.skillbranch.devintensive.models.Bender
+import android.view.inputmethod.EditorInfo
+import ru.skillbranch.devintensive.models.Bender.Question
 
-class MainActivity : AppCompatActivity(), View.OnClickListener {
-    private lateinit var benderImage: ImageView
-    private lateinit var textTxt: TextView
-    private lateinit var messageEt: EditText
-    private lateinit var sendBtn: ImageView
-    private lateinit var benderObj: Bender
+class MainActivity : AppCompatActivity(), View.OnClickListener, TextView.OnEditorActionListener {
+    lateinit var benderImage: ImageView
+    lateinit var textView: TextView
+    lateinit var messageEt: EditText
+    lateinit var sendBtn: ImageView
+
+    lateinit var benderObj: Bender
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         benderImage = iv_bender
-        textTxt = tv_text
-
-        sendBtn = iv_send
+        textView = tv_text
         messageEt = et_message
-        messageEt.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) sendBtn.performClick()
-            false
-        }
+        sendBtn = iv_send
 
         val status = savedInstanceState?.getString("STATUS") ?: Bender.Status.NORMAL.name
         val question = savedInstanceState?.getString("QUESTION") ?: Bender.Question.NAME.name
+
         benderObj = Bender(Bender.Status.valueOf(status), Bender.Question.valueOf(question))
 
-        val (r, g, b) = benderObj.status.color
+        Log.d("M_MainActivity", "onCreate")
+
+        var (r, g, b) = benderObj.status.color
         benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
 
-        textTxt.text = benderObj.askQuestion()
-        sendBtn.setOnClickListener(this)
+        textView.text = benderObj.askQuestion()
 
-        Log.d("M_MainActivity", "onCreate $status $question")
+        sendBtn.setOnClickListener(this)
+        messageEt.setOnEditorActionListener(this)
     }
 
     override fun onRestart() {
@@ -94,18 +94,47 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onClick(v: View?) {
         if (v?.id == R.id.iv_send) {
-            if (isKeyboardOpen()) hideKeyboard()
-            val answer = messageEt.text.toString()
-            messageEt.setText("")
-            if (benderObj.validation(answer)) {
-                val (phrase, color) = benderObj.listenAnswer(answer.toLowerCase())
-                messageEt.setText("")
-                val (r, g, b) = color
-                benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
-                textTxt.text = phrase
-            } else {
-                textTxt.text = "${benderObj.getValidHint()}\n${benderObj.question.question}"
-            }
+            if (benderObj.question.validate(messageEt.text.toString()))
+                sendAnswer()
+            else
+                printErrorMessage()
+
+            hideKeyboard()
         }
+    }
+
+    private fun printErrorMessage() {
+        val errorMessage = when (benderObj.question) {
+            Question.NAME -> "Имя должно начинаться с заглавной буквы"
+            Question.PROFESSION -> "Профессия должна начинаться со строчной буквы"
+            Question.MATERIAL -> "Материал не должен содержать цифр"
+            Question.BDAY -> "Год моего рождения должен содержать только цифры"
+            Question.SERIAL -> "Серийный номер содержит только цифры, и их 7"
+            else -> "На этом все, вопросов больше нет"
+        }
+
+        textView.text = errorMessage + "\n" + benderObj.question.question
+
+        messageEt.setText("")
+    }
+
+    override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
+            sendAnswer()
+
+            hideKeyboard()
+
+            return true
+        }
+
+        return false
+    }
+
+    private fun sendAnswer() {
+        val (phrase, color) = benderObj.listenAnswer(messageEt.text.toString())
+        messageEt.setText("")
+        var (r, g, b) = color
+        benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
+        textView.text = phrase
     }
 }
