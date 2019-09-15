@@ -1,88 +1,83 @@
 package ru.skillbranch.devintensive.utils
 
+import java.util.*
+
 object Utils {
-    fun parseFullName(fullName:String?) : Pair<String?, String?>{
+    fun parseFullName(fullName:String?, divider : String = " ") : Pair<String?, String?> {
+        val parts : List<String>? = fullName?.split(divider)
 
-        if (fullName.isNullOrBlank())
-            return Pair(null, null)
+        var firstName = parts?.getOrNull(0)
+        if (firstName == "")
+            firstName = null
 
-        val parts : List<String>? = fullName?.split(" ")
+        var lastName = parts?.getOrNull(1)
+        if (lastName == "")
+            lastName = null
 
-        val firstName : String? = parts?.getOrNull(0)
-        val lastName : String? = parts?.getOrNull(1)
-
-        return Pair(firstName, lastName)
+//        return Pair(firstName, lastName)
+        return firstName to lastName
     }
 
-    fun transliteration(payload:String, divider:String=" ") =
-         payload.replace(Regex("""[а-яА-Я ]""")) {
-            when (it.value) {
-                " " -> divider
-                "а" -> "a" "А" -> "A"
-                "б" -> "b" "Б" -> "B"
-                "в" -> "v" "В" -> "V"
-                "г" -> "g" "Г" -> "G"
-                "д" -> "d" "Д" -> "D"
-                "е" -> "e" "Е" -> "E"
-                "ё" -> "e" "Ё" -> "E"
-                "ж" -> "zh" "Ж" -> "Zh"
-                "з" -> "z" "З" -> "Z"
-                "и" -> "i" "И" -> "I"
-                "й" -> "i" "Й" -> "I"
-                "к" -> "k" "К" -> "K"
-                "л" -> "l" "Л" -> "L"
-                "м" -> "m" "М" -> "M"
-                "н" -> "n" "Н" -> "N"
-                "о" -> "o" "О" -> "O"
-                "п" -> "p" "П" -> "P"
-                "р" -> "r" "Р" -> "R"
-                "с" -> "s" "С" -> "S"
-                "т" -> "t" "Т" -> "T"
-                "у" -> "u" "У" -> "U"
-                "ф" -> "f" "Ф" -> "F"
-                "х" -> "h" "Х" -> "H"
-                "ц" -> "c" "Ц" -> "C"
-                "ч" -> "ch" "Ч" -> "Ch"
-                "ш" -> "sh" "Ш" -> "Sh"
-                "щ" -> "sh'" "Щ" -> "Sh'"
-                "ъ" -> "" "Ъ" -> ""
-                "ы" -> "i" "Ы" -> "i"
-                "ь" -> "" "Ь" -> ""
-                "э" -> "e" "Э" -> "E"
-                "ю" -> "yu" "Ю" -> "Yu"
-                "я" -> "ya" "Я" -> "Ya"
-                else -> it.value
+    private val map: HashMap<Char, String>
+        get() = hashMapOf(
+            'а' to "a",
+            'б' to "b",
+            'в' to "v",
+            'г' to "g",
+            'д' to "d",
+            'е' to "e",
+            'ё' to "e",
+            'ж' to "zh",
+            'з' to "z",
+            'и' to "i",
+            'й' to "i",
+            'к' to "k",
+            'л' to "l",
+            'м' to "m",
+            'н' to "n",
+            'о' to "o",
+            'п' to "p",
+            'р' to "r",
+            'с' to "s",
+            'т' to "t",
+            'у' to "u",
+            'ф' to "f",
+            'х' to "h",
+            'ц' to "c",
+            'ч' to "ch",
+            'ш' to "sh",
+            'щ' to "sh",
+            'ъ' to "",
+            'ы' to "i",
+            'ь' to "",
+            'э' to "e",
+            'ю' to "yu",
+            'я' to "ya"
+        )
+
+    fun transliteration(payload: String, divider : String = " ") : String {
+        var result = ""
+        payload.replace(" ", divider)
+            .toCharArray()
+            .forEach {
+                val symbol = map[it.toLowerCase()]
+                result += if (symbol.isNullOrEmpty()) it else if (it.isUpperCase()) symbol.capitalize() else symbol
             }
-        }
+        return result
+    }
 
     fun toInitials(firstName: String?, lastName: String?): String? {
-        if (firstName.isNullOrBlank() && lastName.isNullOrBlank())
-            return null
-
-        return "${firstName?.getOrNull(0) ?: ""}${lastName?.getOrNull(0) ?: ""}".toUpperCase()
-    }
-
-    fun checkGit(path:String) : Boolean{
-        val ignore:List<String> = listOf("enterprise", "features", "topics" , "collections", "trending," +
-                "events", "marketplace", "pricing", "nonprofit", "customer-stories", "security", "login", "join")
-
-        var strCatName = path
-        if (strCatName.isEmpty())
-            return true
-        if (!strCatName.contains("github.com"))
-            return false
-        if (strCatName.contains("https://") && strCatName.substringBefore("https://").isNotEmpty())
-            return false
-        strCatName = strCatName.substringAfter("https://")
-        if (strCatName.contains("www.") && strCatName.substringBefore("www.").isNotEmpty())
-            return false
-        strCatName = strCatName.substringAfter("www.")
-        if (strCatName.substringBefore("github.com/").isNotEmpty())
-            return false
-        strCatName = strCatName.substringAfter("github.com/")
-        if (strCatName.isNotEmpty() && !strCatName.contains("/") && !ignore.contains(strCatName)) {
-            return true
+        var first = when (firstName) {
+            null, " ", "" -> null
+            else -> firstName!!.first()
         }
-        return false
+        var last = when (lastName) {
+            null, " ", "" -> null
+            else -> lastName!!.first()
+        }
+        return when (first) {
+            null -> if (last == null) null else "$last".toUpperCase()
+            else -> if (last == null) "$first".toUpperCase() else "$first$last".toUpperCase()
+        }
     }
 }
