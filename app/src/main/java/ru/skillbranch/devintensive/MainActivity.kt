@@ -1,101 +1,117 @@
 package ru.skillbranch.devintensive
 
 import android.graphics.Color
-import android.graphics.ColorFilter
 import android.graphics.PorterDuff
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.PersistableBundle
-import android.text.Editable
-import android.text.SpannableStringBuilder
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import ru.skillbranch.devintensive.extensions.LOG_TAG
 import kotlinx.android.synthetic.main.activity_main.*
+import ru.skillbranch.devintensive.extensions.hideKeyboard
+import ru.skillbranch.devintensive.extensions.isKeyboardClosed
+import ru.skillbranch.devintensive.extensions.isKeyboardOpen
 import ru.skillbranch.devintensive.models.Bender
 
-class MainActivity : AppCompatActivity(), View.OnClickListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener, TextView.OnEditorActionListener {
 
-    // lateinit - отложенная инициализация
-    // onCreate всегда отработает => можем не присваивать null
-    private lateinit var benderImage: ImageView
-    private lateinit var textTxt: TextView
-    private lateinit var messageEt: EditText
-    private lateinit var sendBtn: ImageView
+    lateinit var benderImage : ImageView
+    lateinit var textTxt : TextView
+    lateinit var messageEdt : EditText
+    lateinit var sendBtn : ImageView
 
-    private lateinit var benderObj: Bender
+    lateinit var benderObj : Bender
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //benderImage = findViewById(R.id.iv_bender) as ImageView
         benderImage = iv_bender
         textTxt = tv_text
-        messageEt = et_message
+        messageEdt = et_message
         sendBtn = iv_send
 
         val status = savedInstanceState?.getString("STATUS") ?: Bender.Status.NORMAL.name
-        val question = savedInstanceState?.getString("QUESTION") ?: Bender.Question.NAME.name
+        val question  = savedInstanceState?.getString("QUESTION") ?: Bender.Question.NAME.name
         benderObj = Bender(Bender.Status.valueOf(status), Bender.Question.valueOf(question))
 
-        Log.d(LOG_TAG, "onCreate $status $question")
+        Log.d("M_MainActivity", "OnCreate $status $question")
         val (r, g, b) = benderObj.status.color
         benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
 
-        textTxt.text = benderObj.askQuestion()
+        textTxt.setText(benderObj.askQuestion())
+
         sendBtn.setOnClickListener(this)
+
+        et_message.setOnEditorActionListener(this)
     }
 
     override fun onRestart() {
         super.onRestart()
-        Log.d(LOG_TAG, "onRestart")
-    }
+        Log.d("M_MainActivity", "OnRestart")
 
+    }
     override fun onStart() {
         super.onStart()
-        Log.d(LOG_TAG, "onStart")
+        Log.d("M_MainActivity", "OnStart")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(LOG_TAG, "onResume")
+        Log.d("M_MainActivity", "OnResume")
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(LOG_TAG, "onPause")
+        Log.d("M_MainActivity", "OnPause")
     }
 
     override fun onStop() {
         super.onStop()
-        Log.d(LOG_TAG, "onStop")
+        Log.d("M_MainActivity", "onStop")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(LOG_TAG, "onDestroy")
+        Log.d("M_MainActivity", "onDestroy")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState?.putString("STATUS", benderObj.status.name)
+        outState?.putString("QUESTION", benderObj.question.name)
+        Log.d("M_MainActivity", "onSaveInstanceState ${benderObj.status.name} ${benderObj.question.name}")
+    }
+
+    private fun answerBender(){
+        this.hideKeyboard()
+
+        val (phrase, color) = benderObj.listenAnswer(messageEdt.text.toString())
+        messageEdt.setText("")
+        val (r, g, b) = color
+        benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
+        textTxt.text = phrase
     }
 
     override fun onClick(v: View?) {
         if (v?.id == R.id.iv_send) {
-            val (phrase, color) = benderObj.listenAnswer(messageEt.text.toString().toLowerCase())
-            messageEt.text = SpannableStringBuilder("")
-            val (r, g, b) = color
-            benderImage.setColorFilter(Color.rgb(r, g, b), PorterDuff.Mode.MULTIPLY)
-            textTxt.text = phrase
+            answerBender()
         }
     }
 
-    // Для api < 28 нет гарантии, что метод будет вызван - см. комментарии в видео : 1:57:45 (третье занятие)
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-        // bundle - объект anroid, который позволяет сохранить состояние вашего UI, если система уничтожит процесс приложения
-        // нужен чтобы сохранить пользовательский ввод, макс. объем данных в буфере транзакции - 1 мб.
-        outState?.putString("STATUS", benderObj.status.name)
-        outState?.putString("QUESTION", benderObj.question.name)
-        Log.d(LOG_TAG, "onSaveInstanceState ${benderObj.status.name} ${benderObj.question.name}")
+    override fun onEditorAction(et: TextView?, actionID: Int, p2: KeyEvent?): Boolean {
+        if (et?.id == R.id.et_message){
+            if (actionID == EditorInfo.IME_ACTION_DONE || (p2?.keyCode == KeyEvent.KEYCODE_ENTER && p2?.action == KeyEvent.ACTION_DOWN))
+                answerBender()
+            return true
+        }
+        return false
     }
+
 }
