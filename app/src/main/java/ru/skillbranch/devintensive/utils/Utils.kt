@@ -1,8 +1,5 @@
 package ru.skillbranch.devintensive.utils
 
-import ru.skillbranch.devintensive.models.User
-import java.util.*
-
 object Utils {
     fun parseFullName(fullName: String?): Pair<String?, String?> {
         if(fullName == null || fullName == "" || fullName == " ") {
