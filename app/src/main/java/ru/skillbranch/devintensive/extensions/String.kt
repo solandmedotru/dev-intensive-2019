@@ -1,10 +1,15 @@
 package ru.skillbranch.devintensive.extensions
 
-fun String.truncate(length: Int = 16): String {
-    return "${if (this.trim().length > length) "${this.substring(0, length).trim()}..." else this.trim()}"
+
+
+fun String.truncate(count: Int = 16): String {
+    val input = trim()
+    return when {
+        input.length < count -> input
+        else -> "${input.substring(0, if (input[count - 1] == ' ') count - 1 else count)}..."
+    }
 }
 
-fun String.stripHtml(): String {
-    var temp = Regex("""(\s{2,})""").replace(this, " ")
-    return Regex("""(<.*?>)|(&.+?;)""").replace(temp, "")
-}
+// заменяем все множественные пробелы на одинарный и удаляем все html-теги + html-escape последовательности
+fun String.stripHtml(): String = replace( "<.*?>|&amp;|&gt;|&lt;|&quot;|&apos;|&nbsp;".toRegex(), "")
+    .replace("\\s+".toRegex(), " ")
